@@ -1,65 +1,54 @@
 // Function to generate AI summary of commits
+require("dotenv").config();
+const OpenAI = require("openai");
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+
 async function generateAISummary(commits) {
     try {
-        if (!config.useAI || !config.openaiApiKey || commits.length === 0) {
+        if (!process.env.OPENAI_API_KEY || commits.length === 0) {
             return null;
         }
 
         console.log("Generating AI summary for commits...");
 
-        // Prepare commit data for AI processing
         const commitData = commits.map(commit => ({
             author: commit.commit.author.name,
             message: commit.commit.message,
             date: commit.commit.author.date
         }));
 
-        // Create OpenAI configuration
-        const configuration = new Configuration({
-            apiKey: config.openaiApiKey,
-        });
-        const openai = new OpenAIApi(configuration);
-
-        // Prepare prompt for AI
         const prompt = `
-    Please summarize the following git commits from the repository ${config.repoOwner}/${config.repoName}:
-    
-    ${JSON.stringify(commitData, null, 2)}
-    
-    Create a concise, human-readable summary that:
-    1. Identifies major features or changes
-    2. Groups related commits together
-    3. Highlights important bug fixes
-    4. Explains technical changes in plain language
-    5. Keeps it brief but informative
-    
-    Format your response as markdown.
-    `;
+Please summarize the following git commits from the repository:
 
-        // Call OpenAI API
-        const response = await openai.createChatCompletion({
-            model: "gpt-3.5-turbo",
-            messages: [
-                { role: "system", content: "You are a helpful assistant that summarizes git commits." },
-                { role: "user", content: prompt }
-            ],
-            max_tokens: 500,
+${JSON.stringify(commitData, null, 2)}
+
+Create a concise, human-readable summary that:
+1. Identifies major features or changes
+2. Groups related commits together
+3. Highlights important bug fixes
+4. Explains technical changes in plain language
+5. Keeps it brief
+`;
+
+        const response = await openai.chat.completions.create({
+            model: "gpt-4", // or "gpt-3.5-turbo"
+            messages: [{ role: "user", content: prompt }],
             temperature: 0.7,
         });
 
-        // Get the AI summary
-        const aiSummary = response.data.choices[0].message.content.trim();
-        console.log("AI summary generated successfully");
+        const summary = response.choices[0].message.content.trim();
+        return summary;
 
-        return aiSummary;
     } catch (error) {
-        console.error("Error generating AI summary:", error.message);
-        if (error.response) {
-            console.error("OpenAI API error details:", error.response.data);
-        }
+        console.error("Error generating AI summary:", error.message || error);
         return null;
     }
-}// commit-summary-bot.js
+}
+
+// commit-summary-bot.js
 const { App } = require('@slack/bolt');
 const axios = require('axios');
 const cron = require('node-cron');
