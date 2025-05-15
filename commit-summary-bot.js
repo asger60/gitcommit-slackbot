@@ -15,10 +15,10 @@ async function generateAISummary(commits) {
         }));
 
         // Create OpenAI configuration
-        import OpenAI from 'openai';
-        const openai = new OpenAI({
-            apiKey: config.openaiApiKey
+        const configuration = new Configuration({
+            apiKey: config.openaiApiKey,
         });
+        const openai = new OpenAIApi(configuration);
 
         // Prepare prompt for AI
         const prompt = `
