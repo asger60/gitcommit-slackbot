@@ -41,6 +41,7 @@ Create a concise, human-readable summary that:
 
         const summary = response.choices[0].message.content.trim();
         console.log(summary);
+        
         return summary;
 
     } catch (error) {
@@ -196,7 +197,9 @@ app.command('/commit-summary', async ({ command, ack, respond }) => {
 
     try {
         const commits = await fetchCommits();
-        const summary = generateSummary(commits);
+        const summary = await generateSummary(commits);
+        console.log("fetched summary");
+        
         await respond(summary);
     } catch (error) {
         await respond(`Error generating summary: ${error.message}`);
@@ -210,7 +213,7 @@ async function runTestSummary() {
         const commits = await fetchCommits();
         if (commits.length > 0) {
             console.log('Test successful! Commits found:', commits.length);
-            const summary = generateSummary(commits);
+            const summary = await generateSummary(commits);
             await postSummaryToSlack(summary);
             console.log('Test summary posted to Slack');
         } else {
