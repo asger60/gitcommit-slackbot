@@ -40,6 +40,7 @@ Create a concise, human-readable summary that:
         });
 
         const summary = response.choices[0].message.content.trim();
+        console.log(summary);
         return summary;
 
     } catch (error) {
