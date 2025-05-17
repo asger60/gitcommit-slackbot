@@ -64,7 +64,7 @@ app.command("/lookup", async ({command, ack, say}) => {
     
     await app.start();
     console.log('⚡️FloppyBot is running!');
-    await lookup(app, { text: "Rune Dittmer" }, console.log);
+    //await lookup(app, { text: "Rune Dittmer" }, console.log);
     // Run a test summary immediately
     //await runTestSummary();
     //await postSlackSummary();
