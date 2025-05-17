@@ -1,6 +1,7 @@
 const fs = require("fs");
 const csv = require("csv-parser");
 const Fuse = require("fuse.js");
+const { google } = require("googleapis");
 
 let entries = [];
 let fuse;
@@ -10,6 +11,46 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
+const keyJson = JSON.parse(
+    Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON, "base64").toString()
+);
+
+async function loadSheet() {
+    const auth = new google.auth.GoogleAuth({
+        credentials: JSON.parse(
+            Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_JSON, "base64").toString()
+        ),
+        scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+
+    const sheets = google.sheets({ version: "v4", auth });
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    const range = "The list!A1:Z1000"; // or e.g. "Contacts!A1:Z1000"
+
+    const response = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range,
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+        throw new Error("No data found in sheet");
+    }
+
+    const headers = rows[0];
+    entries = rows.slice(1).map((row) => {
+        const entry = {};
+        headers.forEach((header, i) => {
+            entry[header] = row[i] || "";
+        });
+        return entry;
+    });
+
+    fuse = new Fuse(entries, {
+        keys: ["Company", "Person"],
+        threshold: 0.3,
+    });
+}
 
 async function loadCSV() {
     return new Promise((resolve) => {
@@ -39,23 +80,28 @@ function findEntry(name) {
 module.exports = {lookup};
 
 
-async function lookup(app, command, say) {
+async function lookup(app, command) {
     await loadCSV();
+    console.log('fetching google sheet ');
+    
+    await loadSheet();
+    
     const name = command.text;
     console.log('looking up ' + name);
     
     const matches = findEntry(name);
 
     if (matches.length === 0) {
-        await say(`No match found for *${name}*.`);
+        console.log(`No match found for *${name}*.`);
         return;
     }
 
     for (const entry of matches) {
         const base = `*${entry.Company || "Unknown Company"}* (${entry.Person || "Unknown Person"})
-• Ranking: ${entry.Ranking || "Unknown"}
-• Last contacted: ${entry["Last contacted"] || "Unknown"}
-• Notes: ${entry.Notes || "No notes"}`;
+            • Ranking: ${entry.Ranking || "Unknown"}
+            • Website: ${entry.Website || "Unknown"}
+            • Last contacted: ${entry["Last contacted"] || "Unknown"}
+            • Notes: ${entry.Notes || "No notes"}`;
 
         //const enriched = "";
         const enriched = await enrichWithAI(entry);
@@ -82,7 +128,7 @@ async function enrichWithAI(entry) {
     const prompt = `
                             You are an expert startup assistant. Based on the following notes, give:
                             1. A one-line company summary
-                            2. a quick search on the internet about the person or company, what type of investments or publishing they normally do
+                            2. a quick search on ${entry.Website} about the types of investments types they make, or games they publish
                             
                             Notes:
                             ${entry.Notes || "No notes"}

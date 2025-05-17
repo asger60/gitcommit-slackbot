@@ -6,9 +6,9 @@ const openai = new OpenAI({
 });
 
 module.exports = {
-    runDailySummary,
-    // other exports
+    runDailyCommitsSummary,
 };
+
 async function generateAISummary(commits) {
     try {
         if (!process.env.OPENAI_API_KEY || commits.length === 0) {
@@ -157,7 +157,7 @@ async function postSummary(app, summary) {
     }
 }
 
-async function runDailySummary(app) {
+async function runDailyCommitsSummary(app) {
     console.log('Starting daily git summary process...');
     const commits = await fetchCommits();
     const summary = await generateCommitSummary(commits);

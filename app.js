@@ -2,7 +2,7 @@
 require("dotenv").config();
 const OpenAI = require("openai");
 const {runWeeklySummary} = require("./slack_massages_summaries");
-const {runDailySummary} = require("./commit_messages_summary");
+const {runDailyCommitsSummary} = require("./commit_messages_summary");
 
 const {App} = require('@slack/bolt');
 const cron = require('node-cron');
@@ -41,7 +41,7 @@ function scheduleDailyCommitSummary(cronExpression = '0 9 * * 1-5') {
 app.command('/commit-summary', async ({command, ack, say}) => {
     await ack();
     await say('Generating git commit summary, please wait...');
-    await runDailySummary(app);
+    await runDailyCommitsSummary(app);
 });
 
 
@@ -54,7 +54,8 @@ app.command('/summarize', async ({command, ack, say}) => {
 
 app.command("/lookup", async ({command, ack, say}) => {
     await ack();
-    await lookup(app, command, say);
+    await say('Doing a look up');
+    await lookup(app, command);
 });
 
 
