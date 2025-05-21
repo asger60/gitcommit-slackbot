@@ -80,19 +80,23 @@ function findEntry(name) {
 module.exports = {lookup};
 
 
-async function lookup(app, command) {
+async function lookup(app, command, say) {
     await loadCSV();
     console.log('fetching google sheet ');
     
     await loadSheet();
     
     const name = command.text;
+    say('looking up ' + name);
     console.log('looking up ' + name);
     
     const matches = findEntry(name);
 
     if (matches.length === 0) {
+        say(`No match found for *${name}*.`);
+
         console.log(`No match found for *${name}*.`);
+        
         return;
     }
 

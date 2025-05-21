@@ -55,7 +55,7 @@ app.command('/summarize', async ({command, ack, say}) => {
 app.command("/lookup", async ({command, ack, say}) => {
     await ack();
     await say('Doing a look up');
-    await lookup(app, command);
+    await lookup(app, command, say);
 });
 
 
