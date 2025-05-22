@@ -171,6 +171,7 @@ async function runWeeklySummary(app) {
 
     // Fetch messages
 //    const messages = await fetchChannelMessages(CONFIG.channelId, oldestTimestamp);
+    console.log(`Fetching messages from ${config.channelId} since ${oldestTimestamp}`);
     const messages = await fetchChannelMessagesWithUsernames(app, config.channelId, oldestTimestamp);
 
     console.log(`Fetched ${messages.length} messages`);
